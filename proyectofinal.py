@@ -83,4 +83,5 @@ btn_acerca = ttk.Button(ventana, text="Acerca de", command=abrir_acerca_de)
 btn_acerca.pack(pady=10)
 
 
+
 ventana.mainloop()
