@@ -1,0 +1,4 @@
+1|Libreta|22|Escolar
+2|Bote Lapiz|145|Escolar
+3|Caja Plumon|160|Escolar
+4|Caja Borrador|200|Escolar
