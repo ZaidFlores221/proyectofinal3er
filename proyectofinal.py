@@ -1,6 +1,6 @@
-#Copia de seguridad
-#submodulo
-#Autor: Flores Padilla Ahmed Zaid
+# Copia de seguridad
+# submodulo
+# Autor: Flores Padilla Ahmed Zaid
 # Y Mendez Fiol Yocelin Guadalupe
 
 import tkinter as tk
@@ -8,6 +8,7 @@ from tkinter import ttk
 import os
 from tkinter import messagebox
 from PIL import Image, ImageTk 
+from datetime import datetime
 
 # -------------------------
 # FUNCIONES
@@ -79,6 +80,48 @@ def abrir_registro_productos():
     btn_guardar.pack(pady=20)
 
 
+# MODIFICACIÓN: La función ahora acepta 'logo_img' como argumento
+def mostrar_ticket(producto, precio, cantidad, total, logo_img=None):
+    ticket = tk.Toplevel() 
+    ticket.title("Ticket De Venta")
+    ticket.geometry("300x450") # Se amplía un poco para el logo
+    ticket.resizable(False, False)
+    
+    # 🎨 FONDO: Fondo de la ventana del ticket a NEGRO (#000000) para que combine con el logo
+    ticket.configure(bg="#000000")
+
+    # Si se proporcionó un logo, lo mostramos
+    if logo_img:
+        lbl_logo_ticket = tk.Label(ticket, image=logo_img, bg="#000000")
+        lbl_logo_ticket.image = logo_img # Mantenemos la referencia
+        lbl_logo_ticket.pack(pady=10) # Un poco de padding
+        
+    # Fecha y hora
+    fecha_hora = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p") 
+
+    # Texto Ticket
+    texto = (
+    "*** PUNTO DE VENTA ***\n"
+    "-----------------------\n"
+    f"Fecha: {fecha_hora}\n"
+    "-----------------------\n"
+    f"Producto: {producto}\n"
+    f"Precio: ${float(precio):.2f}\n" 
+    f"Cantidad: {int(cantidad)}\n" 
+    "-----------------------\n"
+    f"Total: ${float(total):.2f}\n" 
+    "-----------------------\n"
+    " ¡ GRACIAS POR SU COMPRA!\n"
+    )
+
+    # 🎨 CONFIGURACIÓN: El texto del ticket también a blanco para contraste con el fondo negro
+    lbl_ticket = tk.Label(ticket, text=texto, justify="left", font=("consolas", 11), bg="#000000", fg="white")
+    lbl_ticket.pack(pady=15)
+
+    btn_cerrar = ttk.Button(ticket, text="Cerrar", command=ticket.destroy) 
+    btn_cerrar.pack(pady=20)
+
+
 def abrir_registro_ventas():
     ven = tk.Toplevel()
     ven.title("Registro de Ventas")
@@ -98,10 +141,8 @@ def abrir_registro_ventas():
                 if len(partes) == 4:
                     idp, desc, precio_str, cat = partes
                     try:
-                        # Almacenar el precio como float para cálculos
                         productos[desc] = float(precio_str.replace(",", "."))
                     except ValueError:
-                        # Si el precio no es un número, se ignora el producto o se alerta
                         continue 
     except FileNotFoundError:
         messagebox.showerror("Error", "No se encontró el archivo productos.txt. No se pueden registrar ventas.")
@@ -116,22 +157,19 @@ def abrir_registro_ventas():
     # ------------------------------------
     def calcular_total(*args):
         try:
-            # Sanitizar entrada: permitir coma como separador decimal, luego convertir a float, y a int para cantidad
-            cant = int(float(txt_cantidad.get().replace(",", "."))) 
+            cant = float(txt_cantidad.get().replace(",", ".")) 
             precio = float(txt_precio.get().replace(",", ".")) 
             
             if cant <= 0:
-                 raise ValueError("Cantidad no positiva")
-                 
-            total = cant * precio
+                 total = 0.00
+            else:
+                 total = cant * precio
             
             txt_total.config(state="normal")
             txt_total.delete(0, tk.END)
-            # Mostrar el total con dos decimales
             txt_total.insert(0, f"{total:.2f}") 
             txt_total.config(state="readonly")
         except:
-            # Si no hay número válido en cantidad o precio, limpiar el total
             txt_total.config(state="normal")
             txt_total.delete(0, tk.END)
             txt_total.config(state="readonly")
@@ -142,7 +180,6 @@ def abrir_registro_ventas():
             precio = productos[prod]
             txt_precio.config(state="normal")
             txt_precio.delete(0, tk.END)
-            # Mostrar el precio con dos decimales
             txt_precio.insert(0, f"{precio:.2f}") 
             txt_precio.config(state="readonly")
             calcular_total()
@@ -153,40 +190,38 @@ def abrir_registro_ventas():
         cant = txt_cantidad.get()
         total = txt_total.get()
 
-        # Validaciones de campos vacíos
         if prod == "" or precio == "" or cant == "" or total == "":
             messagebox.showwarning("Campos Vacíos", "Todos los campos deben estar completos.")
             return
         
-        # Validaciones de números y lógica (opcional pero recomendado)
         try:
             precio_float = float(precio.replace(",", "."))
-            cant_int = int(float(cant.replace(",", ".")))
+            cant_float = float(cant.replace(",", ".")) 
             total_float = float(total.replace(",", "."))
             
-            if cant_int <= 0:
-                 messagebox.showwarning("Cantidad Inválida", "La cantidad debe ser un número entero positivo.")
+            if cant_float <= 0:
+                 messagebox.showwarning("Cantidad Inválida", "La cantidad debe ser un número positivo.")
                  return
             
-            # Revalidar que el total calculado sea correcto (opcional para seguridad)
-            if abs(total_float - (precio_float * cant_int)) > 0.01:
+            if abs(total_float - (precio_float * cant_float)) > 0.01:
                  messagebox.showwarning("Error de Cálculo", "El total calculado parece ser incorrecto.")
-                 # Se puede preguntar si desea guardar de todas formas o forzar el cálculo
-                 # Por ahora, seguiremos, asumiendo que el usuario confía en el cálculo mostrado.
+                 return
                  
         except ValueError:
              messagebox.showerror("Error de Datos", "Precio, Cantidad o Total contienen valores no numéricos válidos.")
              return
              
-        # Guardar venta
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         archivov = os.path.join(BASE_DIR, "ventas.txt")
         
-        # Usamos la ruta completa y segura (archivov)
         with open(archivov, "a", encoding="utf-8") as archivo:
             archivo.write(f"{prod}|{precio}|{cant}|{total}\n")
             
-        messagebox.showinfo("Venta Registrada", "La venta se registró correctamente.")
+        
+        
+        # MODIFICACIÓN: Pasamos el logo a la función mostrar_ticket
+        # Usamos 'ventana.logo_img' que se cargó globalmente en la ventana principal.
+        mostrar_ticket(prod, precio_float, cant_float, total_float, logo_img=ventana.logo_img) 
         
         # Limpiar campos
         cb_producto.set("")
@@ -197,7 +232,6 @@ def abrir_registro_ventas():
     # ------------------------------------
     # CONTROLES VISUALES
     # ------------------------------------
-    # Se usa un Frame para agrupar controles y centrar mejor
     main_frame = tk.Frame(ven)
     main_frame.pack(padx=10, pady=10, fill="x") 
     
@@ -218,17 +252,13 @@ def abrir_registro_ventas():
     txt_cantidad = tk.Entry(main_frame, font=("Arial", 12), textvariable=cantidad_var, width=30)
     txt_cantidad.pack(pady=5) 
     
-    # Evento para recalcular el total al cambiar la cantidad
-    cantidad_var.trace_add("write", lambda *args: calcular_total())
+    cantidad_var.trace_add("write", calcular_total)
     
     lbl_total = tk.Label(main_frame, text="Total:", font=("Arial", 12))
     lbl_total.pack(pady=5)
     txt_total = tk.Entry(main_frame, font=("Arial", 12), state="readonly", width=30)
     txt_total.pack(pady=5)
     
-    # ------------------------------------
-    # EVENTOS Y BOTÓN
-    # ------------------------------------
     cb_producto.bind("<<ComboboxSelected>>", actualizar_precio)
     btn_guardar = ttk.Button(main_frame, text="Registrar Venta", command=registrar_venta)
     btn_guardar.pack(pady=25)
@@ -247,41 +277,37 @@ ventana = tk.Tk()
 ventana.title("Distribuidora - Flores-Gan")
 ventana.geometry("500x600")
 ventana.resizable(False, False)
-# 🎨 FONDO: Fondo de la ventana principal a NEGRO (#000000)
 ventana.configure(bg="#000000") 
 
 
 # -------------------------
-# LOGO 
+# LOGO (carga del logo para la ventana principal y para el ticket)
 # -------------------------
+# Se añade una variable para almacenar el logo, accesible globalmente o como atributo de ventana
+ventana.logo_img = None 
 try:
-    # Usa la ruta BASE_DIR para encontrar el logo, como lo tenías definido.
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     logo_path = os.path.join(BASE_DIR, "ventas2025.png")
     
     imagen = Image.open(logo_path) 
-    imagen = imagen.resize((250, 250)) # Tamaño recomendado
-    img_logo = ImageTk.PhotoImage(imagen)
+    imagen = imagen.resize((150, 150)) # Se reduce el tamaño del logo para que encaje mejor en el ticket
+    ventana.logo_img = ImageTk.PhotoImage(imagen) # Guarda la referencia en el atributo de la ventana
 
-    # 🎨 CONFIGURACIÓN: Fondo de la etiqueta del logo a NEGRO
-    lbl_logo = tk.Label(ventana, image=img_logo, bg="#000000") 
+    lbl_logo = tk.Label(ventana, image=ventana.logo_img, bg="#000000") 
     lbl_logo.pack(pady=20)
     
-    # 🌟 CORRECCIÓN CRÍTICA: Mantenemos la referencia del objeto PhotoImage
-    lbl_logo.image = img_logo 
+    # La referencia ya está guardada en ventana.logo_img
     
 except Exception as e: 
-    # 🎨 CONFIGURACIÓN: Fondo de la etiqueta sin logo a NEGRO y texto a blanco para contraste
     lbl_sin_logo = tk.Label(ventana, text="(Aquí va el logo del sistema)", font=("Arial", 14), bg="#000000", fg="white")
     lbl_sin_logo.pack(pady=40)
-    # print(f"Error al cargar el logo: {e}") 
+    print(f"Error al cargar el logo: {e}") 
 
 
 # -------------------------
 # BOTONES PRINCIPALES
 # -------------------------
 estilo = ttk.Style()
-# 🎨 CAMBIOS: Ancho uniforme y texto negro sobre fondo blanco
 estilo.configure("TButton", 
                  font=("Arial", 12, "bold"), 
                  padding=10,
@@ -290,7 +316,6 @@ estilo.configure("TButton",
                  foreground="black", 
                  relief="flat") 
 
-# Opcional: Estilo al pasar el ratón (hover)
 estilo.map('TButton', background=[('active', '#dddddd')]) 
 
 
