@@ -80,7 +80,7 @@ def abrir_registro_productos():
     btn_guardar.pack(pady=20)
 
 
-# MODIFICACIÓN: La función ahora acepta 'logo_img' como argumento
+
 def mostrar_ticket(producto, precio, cantidad, total, logo_img=None):
     ticket = tk.Toplevel() 
     ticket.title("Ticket De Venta")
@@ -101,7 +101,7 @@ def mostrar_ticket(producto, precio, cantidad, total, logo_img=None):
 
     # Texto Ticket
     texto = (
-    "*** PUNTO DE VENTA ***\n"
+    "*** Flores-Gan ***\n"
     "-----------------------\n"
     f"Fecha: {fecha_hora}\n"
     "-----------------------\n"
@@ -265,10 +265,138 @@ def abrir_registro_ventas():
 
 
 def abrir_reportes():
-    messagebox.showinfo("Reportes", "Aquí irá el módulo de reportes.")
+    ventana = tk.Toplevel()
+    ventana.title("Reporte de Ventas")
+    ventana.geometry("700x500") # Aumentado el tamaño para el total
+    ventana.configure(bg="#f2f2f2")
+
+    titulo = tk.Label(ventana, text="Reporte de Ventas Realizadas",
+    font=("Arial", 16, "bold"), bg="#f2f2f2")
+    titulo.pack(pady=10)
+
+    # Frame para el GRID
+    frame_tabla = tk.Frame(ventana)
+    frame_tabla.pack(pady=10)
+
+    # Columnas del archivo ventas.txt
+    columnas = ("producto", "precio", "cantidad", "total")
+
+    tabla = ttk.Treeview(frame_tabla, columns=columnas, show="headings", height=15)
+
+    # Encabezados
+    tabla.heading("producto", text="Producto")
+    tabla.heading("precio", text="Precio")
+    tabla.heading("cantidad", text="Cantidad")
+    tabla.heading("total", text="Total")
+
+    # Tamaño de columnas
+    tabla.column("producto", width=250, anchor="center")
+    tabla.column("precio", width=100, anchor="center")
+    tabla.column("cantidad", width=100, anchor="center")
+    tabla.column("total", width=120, anchor="center")
+
+    tabla.pack()
+
+    # --- Leer archivo ventas.txt y Calcular Total ---
+    total_general = 0.0 # <-- Inicialización para la suma
+
+    try:
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        archivo_path = os.path.join(BASE_DIR,"ventas.txt")
+        
+        with open(archivo_path, "r", encoding="utf-8") as archivo:
+            for linea in archivo:
+                if linea.strip():
+                    datos = linea.strip().split("|")
+                    
+                    if len(datos) == 4:
+                        # 1. Insertar en la tabla
+                        tabla.insert("", tk.END, values=datos)
+                        
+                        # 2. Calcular el total (índice 3)
+                        try:
+                            total_venta = float(datos[3].replace(",", ".")) 
+                            total_general += total_venta
+                        except ValueError:
+                            # Si el valor de 'total' no es un número, lo ignoramos y seguimos
+                            continue 
+                            
+    except FileNotFoundError:
+        messagebox.showerror("Error", "El archivo ventas.txt no existe.")
+        ventana.destroy()
+        return
+
+    # --- Mostrar el Total General ---
+    tk.Label(ventana, text="---", bg="#f2f2f2", fg="#999999").pack()
+    
+    lbl_total_titulo = tk.Label(ventana, 
+                                text="TOTAL GLOBAL DE VENTAS:",
+                                font=("Arial", 14, "bold"), 
+                                bg="#f2f2f2",
+                                fg="#333333")
+    lbl_total_titulo.pack()
+    
+    lbl_total_valor = tk.Label(ventana, 
+                                text=f"${total_general:,.2f}", # Formato de moneda
+                                font=("Arial", 18, "bold"), 
+                                bg="#f2f2f2", 
+                                fg="green")
+    lbl_total_valor.pack(pady=5)
+
 
 def abrir_acerca_de():
-    messagebox.showinfo("Acerca de", "Distribuidora - Flores-Gan\nProyecto Escolar\nVersión 1.0")
+    # Creamos una nueva ventana Toplevel
+    acerca = tk.Toplevel()
+    acerca.title("Acerca de")
+    acerca.geometry("400x300")
+    acerca.resizable(False, False)
+    
+    # 🎨 Decoración: Fondo Negro como la ventana principal
+    COLOR_FONDO = "#000000"
+    COLOR_TEXTO = "white"
+    acerca.configure(bg=COLOR_FONDO)
+
+    # 1. Mostrar el Logo
+    if ventana.logo_img:
+        # La etiqueta del logo también debe tener fondo negro
+        lbl_logo_acerca = tk.Label(acerca, image=ventana.logo_img, bg=COLOR_FONDO)
+        lbl_logo_acerca.image = ventana.logo_img  # Mantenemos la referencia
+        lbl_logo_acerca.pack(pady=10)
+    else:
+        lbl_sin_logo = tk.Label(acerca, 
+                                 text="(Logo no disponible)", 
+                                 font=("Arial", 12), 
+                                 bg=COLOR_FONDO, # Fondo negro
+                                 fg=COLOR_TEXTO) # Texto blanco
+        lbl_sin_logo.pack(pady=10)
+
+    # 2. Mostrar la información de los autores
+    texto_autores = (
+        "Distribuidora - Flores-Gan\n"
+        "Versión 1.0\n"
+        "\n"
+        "Programa creado por:\n"
+        "Flores Padilla Ahmed Zaid\n"
+        "Yocelin Guadalupe Mendez Fiol"
+    )
+
+    lbl_autores = tk.Label(acerca, 
+                           text=texto_autores, 
+                           justify="center", 
+                           font=("Arial", 11, "bold"), # Añadido negrita para destacar
+                           bg=COLOR_FONDO, # Fondo negro
+                           fg=COLOR_TEXTO) # Texto blanco
+    lbl_autores.pack(pady=10)
+
+    # Botón para cerrar (mantiene el estilo ttk que ya definiste en tu código)
+    btn_cerrar = ttk.Button(acerca, text="Cerrar", command=acerca.destroy)
+    btn_cerrar.pack(pady=15)
+
+
+
+
+
+
 
 # -------------------------
 # VENTANA PRINCIPAL
